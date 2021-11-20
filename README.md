@@ -6,9 +6,64 @@ This repository only contains the add-on and development resources.
 
 ## Features
 
-- ADDON_FEATURE_1
-- ADDON_FEATURE_2
-- ...
+- TODO
+
+### Roadmap
+
+- Creation of brushes
+  - Block
+  - Cylinder
+  - Cone
+  - Prism
+  - Sphere
+  - Arch?
+  - Dome?
+  - Torus?
+  - Double Cone?
+- Brush Manipulation
+  - Vertex
+    - Select
+    - Move
+    - Scale?
+    - Snap to Grid?
+  - Edge
+    - Select
+    - Move
+    - Scale?
+    - Split
+  - Face
+    - Select
+    - Move
+    - Scale?
+  - Tools
+    - Cut (split brush into two along a plane)
+    - Carve (CSG Subtract)
+    - Make Hollow (turn brush into room with walls)
+    - Mirror Selection
+      - X axis
+      - Y axis
+      - Z axis
+- Texture Manipulation
+  - Select Faces
+  - Apply material to faces
+  - Scale material
+  - Shift material (X/Y)
+  - Rotate material
+  - Skew material
+  - Align
+    - Scale to fit
+    - Scale to cover
+    - Justify
+      - Left
+      - Center
+      - Right
+      - Top
+      - Bottom
+- Integration
+  - Generate visual mesh
+  - Generate physics shape
+  - Generate occlusion meshes?
+
 
 ## Installation
 
