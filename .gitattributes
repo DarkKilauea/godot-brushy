@@ -11,4 +11,8 @@
 /CHANGELOG.md export-ignore
 /CONTRIBUTING.md export-ignore
 /icon.png export-ignore
+/icon.png.import export-ignore
 /icon.svg export-ignore
+/default_env.tres export-ignore
+/project.godot export-ignore
+/test_level.tscn export-ignore
