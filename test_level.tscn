@@ -1,3 +1,10 @@
-[gd_scene format=2]
+[gd_scene load_steps=2 format=2]
 
-[node name="Level" type="Spatial"]
+[ext_resource path="res://addons/brushy/brush.gd" type="Script" id=1]
+
+[node name="Level" type="StaticBody"]
+
+[node name="Brush" type="Spatial" parent="."]
+script = ExtResource( 1 )
+collision_enabled = true
+vertices = PoolVector3Array( -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, -1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, -1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, 1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, -1, -1, -1, -1, 1, -1, 1, -1, -1 )

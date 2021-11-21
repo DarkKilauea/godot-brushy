@@ -8,10 +8,25 @@
 
 config_version=4
 
+_global_script_classes=[ {
+"base": "Spatial",
+"class": "Brush",
+"language": "GDScript",
+"path": "res://addons/brushy/brush.gd"
+} ]
+_global_script_class_icons={
+"Brush": ""
+}
+
 [application]
 
-config/name="brushy"
+config/name="Brushy"
+run/main_scene="res://test_level.tscn"
 config/icon="res://icon.png"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "res://addons/brushy/plugin.cfg" )
 
 [physics]
 
