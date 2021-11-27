@@ -7,3 +7,7 @@
 [node name="Brush" type="Spatial" parent="."]
 script = ExtResource( 1 )
 collision_enabled = true
+visual_enabled = true
+
+[node name="OmniLight" type="OmniLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.721, 1.62641, 0 )
