@@ -3,6 +3,10 @@ class_name Brush
 extends Spatial
 
 
+# TODO: Replace with a project setting.  Sets the number of texels that fit in one "unit".
+const DEFAULT_TEXEL_DENSITY := Vector2(128, 128);
+
+
 var collision_enabled := true setget _set_collision_enabled;
 var collision_shape: Shape setget _set_collision_shape;
 var collision_parent: CollisionObject;
@@ -18,13 +22,14 @@ var faces := [];
 
 func _init() -> void:
 	# TODO: Debug logic, remove when generating shapes via tool.
-	#var planes := Geometry.build_cylinder_planes(1, 2, 12, Vector3.AXIS_Y);
+	var planes := Geometry.build_cylinder_planes(1, 2, 12, Vector3.AXIS_Y);
 	#var planes := Geometry.build_capsule_planes(1, 2, 6, 3, Vector3.AXIS_Y);
-	var planes := Geometry.build_box_planes(Vector3(1, 1, 1));
+	#var planes := Geometry.build_box_planes(Vector3(1, 1, 1));
 	var default_material = SpatialMaterial.new();
+	default_material.albedo_texture = preload("res://icon.png");
 	
 	for plane in planes:
-		faces.append(BrushFace.new(plane, default_material, Transform2D.IDENTITY));
+		faces.append(BrushFace.new(plane, default_material, Transform2D.IDENTITY, false));
 	
 	add_child(visual_mesh_instance);
 	set_notify_transform(true);
@@ -195,6 +200,9 @@ func build_visual_mesh() -> Mesh:
 	var faces_by_material := Dictionary();
 	for i in range(faces.size()):
 		var face: BrushFace = faces[i];
+		if (face.skip):
+			continue;
+		
 		if (faces_by_material.has(face.material)):
 			faces_by_material[face.material].append(face);
 		else:
@@ -217,10 +225,12 @@ func build_visual_mesh() -> Mesh:
 			var normal_data := PoolVector3Array();
 			var tangent_data := Array();
 			
-			for vertex in face.vertices:
-				# TODO: Compute UVs
-				vertex_data.append(vertex);
-				normal_data.append(face.plane.normal);
+			for j in range(face.vertices.size()):
+				var vertex: BrushVertex = face.vertices[j];
+				
+				vertex_data.append(vertex.position);
+				uv_data.append(vertex.uv);
+				normal_data.append(vertex.normal);
 				tangent_data.append(face.plane);
 			
 			surface_tool.add_triangle_fan(vertex_data, uv_data, color_data, uv2_data, normal_data, tangent_data);
@@ -239,16 +249,18 @@ func build_collision_shape() -> Shape:
 	for i in range(faces.size()):
 		var face: BrushFace = faces[i];
 		
-		for vertex in face.vertices:
+		for j in range(face.vertices.size()):
+			var vertex: BrushVertex = face.vertices[j];
+			
 			# Check for duplicate
 			var unique_vertex := true;
 			for other_vertex in collision_vertices:
-				if other_vertex.is_equal_approx(vertex):
+				if other_vertex.is_equal_approx(vertex.position):
 					unique_vertex = false;
 					break;
 			
 			if unique_vertex:
-				collision_vertices.append(vertex);
+				collision_vertices.append(vertex.position);
 	
 	var shape := ConvexPolygonShape.new();
 	shape.points = collision_vertices;
@@ -262,23 +274,25 @@ class BrushFace:
 	var plane: Plane;
 	var material: Material;
 	var uv_transform: Transform2D;
+	var skip: bool;
 	
 	## Surface data
 	var center: Vector3;
+	var tangent_basis: Basis;
 	var vertices: Array;
-	var uvs: Array;
 	
 	
-	func _init(p_plane: Plane, p_material: Material, p_uv_transform: Transform2D) -> void:
+	func _init(p_plane: Plane, p_material: Material, p_uv_transform: Transform2D, p_skip: bool) -> void:
 		plane = p_plane;
 		material = p_material;
 		uv_transform = p_uv_transform;
+		skip = p_skip;
 	
 	
 	func build_surface_data(faces: Array) -> void:
 		center = Vector3.ZERO;
+		tangent_basis = _calc_tangent_basis();
 		vertices.clear();
-		uvs.clear();
 		
 		for j in range(faces.size()):
 			for k in range(faces.size()):
@@ -291,12 +305,17 @@ class BrushFace:
 					# Check for duplicate
 					var unique_vertex := true;
 					for other_vertex in vertices:
-						if other_vertex.is_equal_approx(vertex):
+						if other_vertex.position.is_equal_approx(vertex):
 							unique_vertex = false;
 							break;
 					
 					if unique_vertex:
-						vertices.append(vertex);
+						var brush_vertex := BrushVertex.new();
+						brush_vertex.position = vertex;
+						brush_vertex.normal = plane.normal;
+						brush_vertex.uv = _calc_uv(vertex, tangent_basis);
+						
+						vertices.append(brush_vertex);
 						center += vertex;
 		
 		if !vertices.empty():
@@ -314,17 +333,61 @@ class BrushFace:
 		return true;
 	
 	
+	func _calc_tangent_basis() -> Basis:
+		# Figure out basis vectors for UV coordinates by matching our normal against cardinal directions.
+		var a := plane.normal.cross(Vector3.RIGHT);
+		var b := plane.normal.cross(Vector3.UP);
+		var c := plane.normal.cross(Vector3.FORWARD);
+		
+		var max_ab := b if a.dot(a) < b.dot(b) else a;
+		var max_abc := c if max_ab.dot(max_ab) < c.dot(c) else max_ab;
+		
+		var u_axis := max_abc.normalized();
+		var v_axis := plane.normal.cross(u_axis);
+		var w_axis := plane.normal;
+		
+		return Basis(u_axis, v_axis, w_axis);
+	
+	
+	func _calc_uv(vertex: Vector3, tangent_basis: Basis) -> Vector2:
+		# Figure out texture size.
+		var texture_size := Vector2(1, 1);
+		var spatial_material := material as SpatialMaterial;
+		if (spatial_material && spatial_material.albedo_texture):
+			texture_size = spatial_material.albedo_texture.get_size();
+		
+		texture_size /= DEFAULT_TEXEL_DENSITY;
+		
+		var uv := Vector2(tangent_basis.x.dot(vertex), tangent_basis.y.dot(vertex));
+		
+		# Scale by texture size.
+		uv /= texture_size;
+		
+		# Scale by transform.
+		uv /= uv_transform.get_scale();
+		
+		# Translate
+		uv += uv_transform.get_origin() / texture_size;
+		return uv;
+	
+	
 	# Ensure vertices are sorted in the correct winding order.
 	func _fix_winding_order() -> void:
 		if vertices.size() < 3:
 			return;
 		
 		var sorter := WindingSorter.new();
-		sorter.face_basis = vertices[1] - vertices[0];
+		sorter.face_basis = vertices[1].position - vertices[0].position;
 		sorter.face_normal = plane.normal;
 		sorter.face_center = center;
 		
 		vertices.sort_custom(sorter, "sort");
+
+
+class BrushVertex:
+	var position: Vector3;
+	var normal: Vector3;
+	var uv: Vector2;
 
 
 # Sorts verticies in winding order (clockwise).
@@ -334,16 +397,16 @@ class WindingSorter:
 	var face_normal: Vector3;
 	var face_center: Vector3;
 	
-	func sort(p_lhs: Vector3, p_rhs: Vector3):
+	func sort(p_lhs: BrushVertex, p_rhs: BrushVertex):
 		var u := face_basis.normalized();
 		var v := u.cross(face_normal).normalized();
 		
-		var local_lhs := p_lhs - face_center;
+		var local_lhs := p_lhs.position - face_center;
 		var lhs_pu := local_lhs.dot(u);
 		var lhs_pv := local_lhs.dot(v);
 		var lhs_angle := atan2(lhs_pv, lhs_pu);
 		
-		var local_rhs := p_rhs - face_center;
+		var local_rhs := p_rhs.position - face_center;
 		var rhs_pu := local_rhs.dot(u);
 		var rhs_pv := local_rhs.dot(v);
 		var rhs_angle := atan2(rhs_pv, rhs_pu);
