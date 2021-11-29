@@ -25,7 +25,8 @@ func _init() -> void:
 	default_material.albedo_texture = preload("res://icon.png");
 	
 	for plane in planes:
-		faces.append(BrushFace.new(plane, default_material, Transform2D.IDENTITY, false));
+		var face := BrushFace.new(plane, default_material, Transform2D.IDENTITY, false);
+		faces.append(face);
 	
 	add_child(visual_mesh_instance);
 	set_notify_transform(true);
@@ -76,8 +77,42 @@ func _get_property_list() -> Array:
 			"usage": PROPERTY_USAGE_EDITOR,
 			"hint": PROPERTY_HINT_RESOURCE_TYPE,
 			"hint_string": "Mesh"
+		},
+		{
+			"name": "face_data",
+			"type": TYPE_ARRAY,
+			"usage": PROPERTY_USAGE_NOEDITOR,
 		}
 	];
+
+
+func _get(property: String):
+	match property:
+		"face_data":
+			var data := [];
+			for i in range(faces.size()):
+				var face: BrushFace = faces[i];
+				data.append(face.to_dictionary());
+			
+			return data;
+	
+	return null;
+
+
+func _set(property: String, value) -> bool:
+	match property:
+		"face_data":
+			faces.clear();
+			
+			for data in value:
+				var face := _brush_face_from_dictionary(data);
+				if (face):
+					faces.append(face);
+			
+			mark_faces_dirty();
+			return true;
+	
+	return false;
 
 
 func _notification(what: int) -> void:
@@ -184,6 +219,20 @@ func _update_face_data() -> void:
 		face.build_surface_data(faces);
 	
 	print_debug("Face data gen time: ", (OS.get_ticks_usec() - start_time) / 1000.0, "ms");
+	faces_dirty = false;
+
+
+# This has to be here due to a bug in GDScript preventing BrushFace from calling its own initializer.
+static func _brush_face_from_dictionary(data: Dictionary) -> BrushFace:
+	var plane = data.get("plane", null);
+	var material = data.get("material", null);
+	var uv_transform = data.get("uv_transform", Transform2D.IDENTITY);
+	var skip = data.get("skip", false);
+	
+	if (!plane || !plane is Plane):
+		return null;
+	
+	return BrushFace.new(plane, material, uv_transform, skip);
 
 
 func build_visual_mesh() -> Mesh:

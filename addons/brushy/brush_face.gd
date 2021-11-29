@@ -60,6 +60,15 @@ func build_surface_data(faces: Array) -> void:
 	_fix_winding_order();
 
 
+func to_dictionary() -> Dictionary:
+	return {
+		"plane": plane,
+		"material": material,
+		"uv_transform": uv_transform,
+		"skip": skip
+	};
+
+
 func _vertex_in_hull(vertex: Vector3, faces: Array) -> bool:
 	for face in faces:
 		var plane: Plane = face.plane;
