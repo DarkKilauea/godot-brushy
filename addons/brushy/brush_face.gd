@@ -5,6 +5,14 @@ extends Reference
 
 # TODO: Replace with a project setting.  Sets the number of texels that fit in one "unit".
 const DEFAULT_TEXEL_DENSITY := Vector2(128, 128);
+const cardinal_axis = [
+	[Vector3.FORWARD, Vector3.LEFT, Vector3.DOWN],
+	[Vector3.RIGHT, Vector3.FORWARD, Vector3.DOWN],
+	[Vector3.BACK, Vector3.RIGHT, Vector3.DOWN],
+	[Vector3.LEFT, Vector3.BACK, Vector3.DOWN],
+	[Vector3.UP, Vector3.RIGHT, Vector3.BACK],
+	[Vector3.DOWN, Vector3.RIGHT, Vector3.FORWARD],
+];
 
 
 var plane: Plane;
@@ -79,19 +87,18 @@ func _vertex_in_hull(vertex: Vector3, faces: Array) -> bool:
 
 
 func _calc_tangent_basis() -> Basis:
+	var best_axis: Array;
+	var best_dot_product: float;
+	
 	# Figure out basis vectors for UV coordinates by matching our normal against cardinal directions.
-	var a := plane.normal.cross(Vector3.RIGHT);
-	var b := plane.normal.cross(Vector3.UP);
-	var c := plane.normal.cross(Vector3.FORWARD);
+	for face_axis in cardinal_axis:
+		var facing_dir: Vector3 = face_axis[0];
+		var dot_product := plane.normal.dot(facing_dir);
+		if (dot_product > best_dot_product):
+			best_dot_product = dot_product;
+			best_axis = face_axis;
 	
-	var max_ab := b if a.dot(a) < b.dot(b) else a;
-	var max_abc := c if max_ab.dot(max_ab) < c.dot(c) else max_ab;
-	
-	var u_axis := max_abc.normalized();
-	var v_axis := plane.normal.cross(u_axis);
-	var w_axis := plane.normal;
-	
-	return Basis(u_axis, v_axis, w_axis);
+	return Basis(best_axis[1], best_axis[2], best_axis[0]);
 
 
 func _calc_uv(vertex: Vector3, tangent_basis: Basis) -> Vector2:
