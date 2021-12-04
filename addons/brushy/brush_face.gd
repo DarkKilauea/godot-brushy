@@ -37,7 +37,7 @@ func build_surface_data(faces: Array) -> void:
 			var face3: BrushFace = faces[k];
 		
 			var vertex = plane.intersect_3(face2.plane, face3.plane);
-			if vertex and _vertex_in_hull(vertex, faces):
+			if vertex != null and _vertex_in_hull(vertex, faces):
 				
 				# Check for duplicate
 				var unique_vertex := true;
