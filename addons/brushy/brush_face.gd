@@ -4,7 +4,7 @@ extends Reference
 
 
 # TODO: Replace with a project setting.  Sets the number of texels that fit in one "unit".
-const DEFAULT_TEXEL_DENSITY := Vector2(128, 128);
+const DEFAULT_TEXEL_DENSITY := Vector2(1024, 1024);
 const cardinal_axis = [
 	[Vector3.FORWARD, Vector3.LEFT, Vector3.DOWN],
 	[Vector3.RIGHT, Vector3.FORWARD, Vector3.DOWN],
@@ -24,13 +24,6 @@ var skip: bool;
 var center: Vector3;
 var tangent_basis: Basis;
 var vertices: Array;
-
-
-func _init(p_plane: Plane, p_material: Material, p_uv_transform: Transform2D, p_skip: bool) -> void:
-	plane = p_plane;
-	material = p_material;
-	uv_transform = p_uv_transform;
-	skip = p_skip;
 
 
 func build_surface_data(faces: Array) -> void:
@@ -66,15 +59,6 @@ func build_surface_data(faces: Array) -> void:
 		center /= vertices.size();
 	
 	_fix_winding_order();
-
-
-func to_dictionary() -> Dictionary:
-	return {
-		"plane": plane,
-		"material": material,
-		"uv_transform": uv_transform,
-		"skip": skip
-	};
 
 
 func _vertex_in_hull(vertex: Vector3, faces: Array) -> bool:

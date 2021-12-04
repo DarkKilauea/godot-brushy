@@ -21,11 +21,10 @@ func _init() -> void:
 	#var planes := Geometry.build_cylinder_planes(1, 2, 12, Vector3.AXIS_Y);
 	#var planes := Geometry.build_capsule_planes(1, 2, 6, 3, Vector3.AXIS_Y);
 	var planes := Geometry.build_box_planes(Vector3(1, 1, 1));
-	var default_material = SpatialMaterial.new();
-	default_material.albedo_texture = preload("res://icon.png");
 	
 	for plane in planes:
-		var face := BrushFace.new(plane, default_material, Transform2D.IDENTITY, false);
+		var face := BrushFace.new();
+		face.plane = plane;
 		faces.append(face);
 	
 	add_child(visual_mesh_instance);
@@ -38,7 +37,7 @@ func _ready() -> void:
 
 
 func _get_property_list() -> Array:
-	return [
+	var properties = [
 		{
 			"name": "Brush",
 			"type": TYPE_NIL,
@@ -55,13 +54,6 @@ func _get_property_list() -> Array:
 			"type": TYPE_BOOL
 		},
 		{
-			"name": "collision_shape",
-			"type": TYPE_OBJECT,
-			"usage": PROPERTY_USAGE_EDITOR,
-			"hint": PROPERTY_HINT_RESOURCE_TYPE,
-			"hint_string": "Shape"
-		},
-		{
 			"name": "Visual",
 			"type": TYPE_NIL,
 			"usage": PROPERTY_USAGE_GROUP,
@@ -70,47 +62,110 @@ func _get_property_list() -> Array:
 		{
 			"name": "visual_enabled",
 			"type": TYPE_BOOL
-		},
-		{
-			"name": "visual_mesh",
-			"type": TYPE_OBJECT,
-			"usage": PROPERTY_USAGE_EDITOR,
-			"hint": PROPERTY_HINT_RESOURCE_TYPE,
-			"hint_string": "Mesh"
-		},
-		{
-			"name": "face_data",
-			"type": TYPE_ARRAY,
-			"usage": PROPERTY_USAGE_NOEDITOR,
 		}
 	];
+	
+	for i in range(faces.size()):
+		var prefix := "faces/%d/" % i;
+		var face: BrushFace = faces[i];
+		
+		properties.append({
+			"name": prefix + "plane",
+			"type": TYPE_PLANE
+		});
+		
+		properties.append({
+			"name": prefix + "material",
+			"type": TYPE_OBJECT,
+			"hint": PROPERTY_HINT_RESOURCE_TYPE,
+			"hint_string": "Material"
+		});
+		
+		properties.append({
+			"name": prefix + "uv_transform",
+			"type": TYPE_TRANSFORM2D
+		});
+		
+		properties.append({
+			"name": prefix + "skip",
+			"type": TYPE_BOOL
+		});
+	
+	return properties;
 
 
 func _get(property: String):
-	match property:
-		"face_data":
-			var data := [];
-			for i in range(faces.size()):
-				var face: BrushFace = faces[i];
-				data.append(face.to_dictionary());
-			
-			return data;
-	
+	if (property.begins_with("faces/")):
+		var parts := property.split("/");
+		if parts.size() != 3:
+			push_error("Not enough parts (need 3) for property: %s" % property);
+			return null;
+		
+		var face_id := int(parts[1]);
+		var prop := parts[2];
+		
+		if face_id < 0 or face_id >= faces.size():
+			push_error("Face %d is not present in brush." % face_id);
+			return null;
+		
+		var face: BrushFace = faces[face_id];
+		match prop:
+			"plane":
+				return face.plane;
+			"material":
+				return face.material;
+			"uv_transform":
+				return face.uv_transform;
+			"skip":
+				return face.skip;
+			_:
+				return null;
+		
 	return null;
 
 
 func _set(property: String, value) -> bool:
-	match property:
-		"face_data":
-			faces.clear();
-			
-			for data in value:
-				var face := _brush_face_from_dictionary(data);
-				if (face):
-					faces.append(face);
-			
+	if (property.begins_with("faces/")):
+		var parts := property.split("/");
+		if (parts.size() != 3):
+			push_error("Not enough parts (need 3) for property: %s" % property);
+			return false;
+		
+		var face_id := int(parts[1]);
+		var prop := parts[2];
+		
+		if (face_id < 0):
+			push_error("Face %d is invalid." % face_id);
+			return false;
+		
+		if (face_id >= faces.size()):
+			faces.resize(face_id + 1);
+		
+		var face: BrushFace = faces[face_id];
+		if (!face):
+			face = BrushFace.new();
+			faces[face_id] = face;
 			mark_faces_dirty();
-			return true;
+		
+		match prop:
+			"plane":
+				face.plane = value;
+				mark_faces_dirty();
+				return true;
+			"material":
+				face.material = value;
+				mark_faces_dirty();
+				return true;
+			"uv_transform":
+				face.uv_transform = value;
+				mark_faces_dirty();
+				return true;
+			"skip":
+				face.skip = value;
+				mark_faces_dirty();
+				return true;
+			_:
+				return false;
 	
 	return false;
 
@@ -220,19 +275,6 @@ func _update_face_data() -> void:
 	
 	print_debug("Face data gen time: ", (OS.get_ticks_usec() - start_time) / 1000.0, "ms");
 	faces_dirty = false;
-
-
-# This has to be here due to a bug in GDScript preventing BrushFace from calling its own initializer.
-static func _brush_face_from_dictionary(data: Dictionary) -> BrushFace:
-	var plane = data.get("plane", null);
-	var material = data.get("material", null);
-	var uv_transform = data.get("uv_transform", Transform2D.IDENTITY);
-	var skip = data.get("skip", false);
-	
-	if (!plane || !plane is Plane):
-		return null;
-	
-	return BrushFace.new(plane, material, uv_transform, skip);
 
 
 func build_visual_mesh() -> Mesh:
