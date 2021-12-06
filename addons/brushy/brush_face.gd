@@ -97,13 +97,10 @@ func _calc_uv(vertex: Vector3, tangent_basis: Basis) -> Vector2:
 	var uv := Vector2(tangent_basis.x.dot(vertex), tangent_basis.y.dot(vertex));
 	
 	# Scale by texture size.
-	uv /= texture_size;
+	var texture_transform := uv_transform.scaled(Vector2(1.0 / texture_size.x, 1.0 / texture_size.y));
 	
 	# Scale by transform.
-	uv /= uv_transform.get_scale();
-	
-	# Translate
-	uv += uv_transform.get_origin() / texture_size;
+	uv = texture_transform.xform(uv);
 	return uv;
 
 
