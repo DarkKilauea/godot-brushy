@@ -12,6 +12,7 @@ var visual_enabled := true setget _set_visual_enabled;
 var visual_mesh: Mesh setget _set_visual_mesh;
 var visual_mesh_instance := MeshInstance.new();
 
+var center := Vector3.ZERO;
 var faces_dirty := false;
 var faces := [];
 
@@ -248,6 +249,23 @@ func _set_visual_mesh(value: Mesh) -> void:
 	property_list_changed_notify();
 
 
+func get_face_plane(index: int) -> Plane:
+	if (index < 0 or index >= faces.size()):
+		return Plane();
+
+	var face: BrushFace = faces[index];
+	return face.plane;
+
+
+func set_face_plane(index: int, plane: Plane) -> void:
+	if (index < 0 or index >= faces.size()):
+		return;
+
+	var face: BrushFace = faces[index];
+	face.plane = plane;
+	mark_faces_dirty();
+
+
 func mark_faces_dirty() -> void:
 	if (faces_dirty):
 		return;
@@ -258,6 +276,7 @@ func mark_faces_dirty() -> void:
 
 func _update_meshes() -> void:
 	_update_face_data();
+	_update_center();
 	
 	if (visual_enabled):
 		self.visual_mesh = build_visual_mesh();
@@ -265,6 +284,7 @@ func _update_meshes() -> void:
 		self.visual_mesh = null;
 	
 	self.collision_shape = build_collision_shape();
+	update_gizmo();
 
 
 func _update_face_data() -> void:
@@ -275,6 +295,15 @@ func _update_face_data() -> void:
 	
 	print_debug("Face data gen time: ", (OS.get_ticks_usec() - start_time) / 1000.0, "ms");
 	faces_dirty = false;
+
+
+func _update_center() -> void:
+	center = Vector3.ZERO;
+	for face in faces:
+		center += face.center;
+	
+	if (!faces.empty()):
+		center /= faces.size();
 
 
 func build_visual_mesh() -> Mesh:
