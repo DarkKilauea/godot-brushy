@@ -28,13 +28,14 @@ func _init() -> void:
 		face.plane = plane;
 		faces.append(face);
 	
+	mark_faces_dirty();
+	
+	# HACK: Due to a bug in GIProbe, we need to mark our internal MeshInstance as bake-able.
+	# If we don't, then get_meshes will not respect any materials on the generated mesh.
+	visual_mesh_instance.use_in_baked_light = true;
+	visual_mesh_instance.generate_lightmap = true;
 	add_child(visual_mesh_instance);
 	set_notify_transform(true);
-
-
-func _ready() -> void:
-	# TODO: Remove this when we can save/load face data from scene.  Changing face data should mark dirty.
-	mark_faces_dirty();
 
 
 func _get_property_list() -> Array:
@@ -384,3 +385,14 @@ func build_collision_shape() -> Shape:
 	print_debug("Collision Shape gen time: ", (OS.get_ticks_usec() - start_time) / 1000.0, "ms");
 	
 	return shape;
+
+
+# Used by BakedLightmap to get meshes that should have lightmaps applied.
+func get_bake_meshes() -> Array:
+	visual_mesh.lightmap_unwrap(global_transform, 0.1);
+	return [ visual_mesh, Transform() ];
+
+
+# TODO: Add this back in whenever GIProbe is fixed to look at the materials on the mesh.
+#func get_meshes() -> Array:
+#	return [ Transform(), visual_mesh ];
