@@ -1,0 +1,16 @@
+[configuration]
+
+entry_symbol = "gdextension_init"
+
+[libraries]
+
+macos.debug = "bin/libbrushy.macos.debug.framework"
+macos.release = "bin/libbrushy.macos.release.framework"
+windows.debug.x86_64 = "bin/libbrushy.windows.debug.x86_64.dll"
+windows.release.x86_64 = "bin/libbrushy.windows.release.x86_64.dll"
+linux.debug.x86_64 = "bin/libbrushy.linux.debug.x86_64.so"
+linux.release.x86_64 = "bin/libbrushy.linux.release.x86_64.so"
+linux.debug.arm64 = "bin/libbrushy.linux.debug.arm64.so"
+linux.release.arm64 = "bin/libbrushy.linux.release.arm64.so"
+linux.debug.rv64 = "bin/libbrushy.linux.debug.rv64.so"
+linux.release.rv64 = "bin/libbrushy.linux.release.rv64.so"
