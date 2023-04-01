@@ -134,7 +134,7 @@ void Brush::Face::_fix_winding_order() {
 	Vector3 face_normal;
 	Vector3 face_center;
 
-    // TODO: Remove need for std::vector
+	// TODO: Remove need for std::vector
 	std::vector<Vertex> vertices_copy;
 	vertices_copy.reserve(vertices.size());
 	for (const Vertex &v : vertices) {
@@ -167,6 +167,8 @@ void Brush::Face::_fix_winding_order() {
 }
 
 void Brush::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("_update_meshes"), &Brush::_update_meshes);
+
 	ClassDB::bind_method(D_METHOD("set_collision_enabled", "enabled"), &Brush::set_collision_enabled);
 	ClassDB::bind_method(D_METHOD("is_collision_enabled"), &Brush::is_collision_enabled);
 
@@ -207,6 +209,12 @@ void Brush::_notification(int what) {
 			if (collision_parent) {
 				_update_in_shape_owner();
 			}
+
+		} break;
+		case NOTIFICATION_READY: {
+			visual_mesh_instance = memnew(MeshInstance3D);
+			visual_mesh_instance->set_gi_mode(GeometryInstance3D::GI_MODE_STATIC);
+			add_child(visual_mesh_instance);
 		} break;
 		case NOTIFICATION_LOCAL_TRANSFORM_CHANGED: {
 			if (collision_parent) {
@@ -374,10 +382,6 @@ void Brush::_update_meshes() {
 }
 
 Brush::Brush() {
-	visual_mesh_instance = memnew(MeshInstance3D);
-	visual_mesh_instance->set_gi_mode(GeometryInstance3D::GI_MODE_STATIC);
-	add_child(visual_mesh_instance);
-
 	set_notify_local_transform(true);
 }
 

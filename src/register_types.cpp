@@ -12,7 +12,7 @@ using namespace godot;
 
 void gdextension_initialize(ModuleInitializationLevel p_level) {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
-		ClassDB::register_abstract_class<Brush>();
+		ClassDB::register_class<Brush>();
 		ClassDB::register_class<BoxBrush>();
 		ClassDB::register_class<CylinderBrush>();
 	}
