@@ -185,6 +185,83 @@ void Brush::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "visual_enabled"), "set_visual_enabled", "is_visual_enabled");
 }
 
+void Brush::_get_property_list(List<PropertyInfo> *p_list) const {
+	for (uint32_t i = 0; i < faces.size(); i++) {
+		String prefix = "faces/" + itos(i) + "/";
+
+		p_list->push_back(PropertyInfo(Variant::PLANE, prefix + "plane"));
+		p_list->push_back(PropertyInfo(Variant::OBJECT, prefix + "material", PROPERTY_HINT_RESOURCE_TYPE, "Material"));
+		p_list->push_back(PropertyInfo(Variant::TRANSFORM2D, prefix + "uv_transform"));
+		p_list->push_back(PropertyInfo(Variant::BOOL, prefix + "skip"));
+	}
+}
+
+bool Brush::_set(const StringName &p_name, const Variant &p_value) {
+	if (p_name.begins_with("faces/")) {
+		PackedStringArray parts = p_name.split("/");
+		ERR_FAIL_COND_V_MSG(parts.size() != 3, false, "Incorrect number of parts (need 3) for property '" + p_name + "'.");
+
+		int face_index = parts[1].to_int();
+		String property = parts[2];
+
+		ERR_FAIL_COND_V_MSG(face_index < 0, false, "Face index must be greater than or equal to 0.");
+
+		if (face_index >= faces.size()) {
+			faces.resize(face_index + 1);
+		}
+
+		Face &face = faces[face_index];
+		if (property == "plane") {
+			face.plane = p_value;
+			_mark_faces_dirty();
+			return true;
+		} else if (property == "material") {
+			face.material = p_value;
+			_mark_faces_dirty();
+			return true;
+		} else if (property == "uv_transform") {
+			face.uv_transform = p_value;
+			_mark_faces_dirty();
+			return true;
+		} else if (property == "skip") {
+			face.skip = p_value;
+			_mark_faces_dirty();
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool Brush::_get(const StringName &p_name, Variant &r_ret) const {
+	if (p_name.begins_with("faces/")) {
+		PackedStringArray parts = p_name.split("/");
+		ERR_FAIL_COND_V_MSG(parts.size() != 3, false, "Incorrect number of parts (need 3) for property '" + p_name + "'.");
+
+		int face_index = parts[1].to_int();
+		String property = parts[2];
+
+		ERR_FAIL_INDEX_V_MSG(face_index, faces.size(), false, "Face " + itos(face_index) + " is not present in brush.");
+
+		const Face &face = faces[face_index];
+		if (property == "plane") {
+			r_ret = face.plane;
+			return true;
+		} else if (property == "material") {
+			r_ret = face.material;
+			return true;
+		} else if (property == "uv_transform") {
+			r_ret = face.uv_transform;
+			return true;
+		} else if (property == "skip") {
+			r_ret = face.skip;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void Brush::_notification(int what) {
 	switch (what) {
 		case NOTIFICATION_PARENTED: {

@@ -52,7 +52,11 @@ class Brush : public Node3D {
 
 protected:
 	static void _bind_methods();
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+	bool _set(const StringName &p_name, const Variant &p_value);
+	bool _get(const StringName &p_name, Variant &r_ret) const;
 	void _notification(int p_what);
+
 	void _update_in_shape_owner(bool p_xform_only = false);
 
 	void _set_collision_shape(const Ref<Shape3D> &p_shape);
