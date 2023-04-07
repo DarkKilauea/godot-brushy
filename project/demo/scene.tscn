@@ -1,12 +1,39 @@
-[gd_scene format=3 uid="uid://c7u64tpv6byvb"]
+[gd_scene load_steps=3 format=3 uid="uid://c7u64tpv6byvb"]
+
+[ext_resource type="Material" uid="uid://c5csl2d2cofyy" path="res://demo/materials/wall_material.tres" id="1_xvw88"]
+[ext_resource type="Material" uid="uid://gxxyhea38bm" path="res://demo/materials/floor_material.tres" id="2_jlnb8"]
 
 [node name="Scene" type="Node"]
 
 [node name="BoxBody" type="StaticBody3D" parent="."]
 
 [node name="BoxBrush" type="BoxBrush" parent="BoxBody"]
+faces/0/material = ExtResource("1_xvw88")
+faces/1/material = ExtResource("1_xvw88")
+faces/2/material = ExtResource("2_jlnb8")
+faces/3/material = ExtResource("2_jlnb8")
+faces/4/material = ExtResource("1_xvw88")
+faces/5/material = ExtResource("1_xvw88")
 
 [node name="CylinderBody" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.53135)
 
 [node name="CylinderBrush" type="CylinderBrush" parent="CylinderBody"]
+faces/0/material = ExtResource("1_xvw88")
+faces/1/material = ExtResource("1_xvw88")
+faces/2/material = ExtResource("1_xvw88")
+faces/3/material = ExtResource("1_xvw88")
+faces/4/material = ExtResource("1_xvw88")
+faces/5/material = ExtResource("1_xvw88")
+faces/6/material = ExtResource("1_xvw88")
+faces/7/material = ExtResource("1_xvw88")
+faces/8/material = ExtResource("1_xvw88")
+faces/9/material = ExtResource("1_xvw88")
+faces/10/material = ExtResource("1_xvw88")
+faces/11/material = ExtResource("1_xvw88")
+faces/12/material = ExtResource("1_xvw88")
+faces/13/material = ExtResource("1_xvw88")
+faces/14/material = ExtResource("1_xvw88")
+faces/15/material = ExtResource("1_xvw88")
+faces/16/material = ExtResource("2_jlnb8")
+faces/17/material = ExtResource("2_jlnb8")
