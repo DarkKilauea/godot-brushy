@@ -2,4 +2,11 @@
 
 [node name="Scene" type="Node"]
 
-[node name="BoxBrush" type="BoxBrush" parent="."]
+[node name="BoxBody" type="StaticBody3D" parent="."]
+
+[node name="BoxBrush" type="BoxBrush" parent="BoxBody"]
+
+[node name="CylinderBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.53135)
+
+[node name="CylinderBrush" type="CylinderBrush" parent="CylinderBody"]

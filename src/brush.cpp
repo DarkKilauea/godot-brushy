@@ -125,14 +125,16 @@ Vector2 Brush::Face::_calc_uv(const Vector3 &vertex, Basis tangent_basis) const 
 	return uv;
 }
 
+// Sorts verticies in winding order (clockwise).
+// Adapted from https://github.com/QodotPlugin/libmap/blob/master/src/c/geo_generator.c
 void Brush::Face::_fix_winding_order() {
 	if (vertices.size() < 3) {
 		return;
 	}
 
-	Vector3 face_basis;
-	Vector3 face_normal;
-	Vector3 face_center;
+	Vector3 face_basis = vertices[1].position - vertices[0].position;
+	Vector3 face_normal = plane.normal;
+	Vector3 face_center = center;
 
 	// TODO: Remove need for std::vector
 	std::vector<Vertex> vertices_copy;
@@ -300,7 +302,7 @@ Ref<ArrayMesh> Brush::_build_visual_mesh() const {
 	// Group faces by their material
 	HashSet<Ref<Material>> materials;
 	HashMap<Ref<Material>, LocalVector<Face>> faces_by_material;
-	for (Face face : faces) {
+	for (const Face &face : faces) {
 		if (face.skip) {
 			continue;
 		}
@@ -318,7 +320,7 @@ Ref<ArrayMesh> Brush::_build_visual_mesh() const {
 		surface_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
 		surface_tool->set_material(material);
 
-		for (Face face : faces_by_material[material]) {
+		for (const Face &face : faces_by_material[material]) {
 			vertex_data.clear();
 			uv_data.clear();
 			color_data.clear();
@@ -353,13 +355,13 @@ void Brush::_mark_faces_dirty() {
 
 void Brush::_update_meshes() {
 	// Update face data
-	for (Face face : faces) {
+	for (Face &face : faces) {
 		face._build_surface_data(faces);
 	}
 
 	// Calculate center
 	center = Vector3();
-	for (Face face : faces) {
+	for (const Face &face : faces) {
 		center += face.center;
 	}
 
@@ -395,7 +397,9 @@ void Brush::set_collision_enabled(bool p_enabled) {
 
 	collision_enabled = p_enabled;
 
-	_update_in_shape_owner();
+	if (collision_parent) {
+		_update_in_shape_owner();
+	}
 }
 
 void Brush::set_visual_enabled(bool p_enabled) {
