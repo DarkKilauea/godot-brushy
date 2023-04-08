@@ -36,7 +36,7 @@ const Vector3 cardinal_axis[6][3] = {
 
 void Brush::Face::_build_surface_data(const LocalVector<Face> &otherFaces) {
 	center = Vector3();
-	tangent_basis = _calc_tangent_basis();
+	uv_basis = _calc_tangent_basis();
 	vertices.clear();
 
 	for (const Face &face2 : otherFaces) {
@@ -57,7 +57,7 @@ void Brush::Face::_build_surface_data(const LocalVector<Face> &otherFaces) {
 					Vertex new_vertex;
 					new_vertex.position = vertex;
 					new_vertex.normal = plane.normal;
-					new_vertex.uv = _calc_uv(vertex, tangent_basis);
+					new_vertex.uv = _calc_uv(vertex, uv_basis);
 
 					vertices.push_back(new_vertex);
 					center += vertex;
@@ -100,7 +100,7 @@ Basis Brush::Face::_calc_tangent_basis() const {
 	return Basis(best_axis[1], best_axis[2], best_axis[0]);
 }
 
-Vector2 Brush::Face::_calc_uv(const Vector3 &vertex, Basis tangent_basis) const {
+Vector2 Brush::Face::_calc_uv(const Vector3 &vertex, Basis uv_basis) const {
 	// Figure out texture size
 	Vector2 texture_size = Vector2(1.0, 1.0);
 	Vector2 texel_density = ProjectSettings::get_singleton()->get_setting("brushy/default_texel_density", Vector2(1024.0, 1024.0));
@@ -116,7 +116,7 @@ Vector2 Brush::Face::_calc_uv(const Vector3 &vertex, Basis tangent_basis) const 
 	texture_size /= texel_density;
 
 	// Calculate UV
-	Vector2 uv = Vector2(tangent_basis[0].dot(vertex), tangent_basis[1].dot(vertex));
+	Vector2 uv = Vector2(uv_basis[0].dot(vertex), uv_basis[1].dot(vertex));
 
 	// Scale by texture size
 	Transform2D texture_transform = uv_transform.scaled(Size2(1.0 / texture_size.x, 1.0 / texture_size.y));
@@ -180,6 +180,27 @@ void Brush::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_visual_enabled"), &Brush::is_visual_enabled);
 
 	ClassDB::bind_method(D_METHOD("get_visual_mesh"), &Brush::get_visual_mesh);
+
+	ClassDB::bind_method(D_METHOD("get_face_count"), &Brush::get_face_count);
+
+	ClassDB::bind_method(D_METHOD("set_face_plane", "face_index", "plane"), &Brush::set_face_plane);
+	ClassDB::bind_method(D_METHOD("get_face_plane", "face_index"), &Brush::get_face_plane);
+
+	ClassDB::bind_method(D_METHOD("set_face_material", "face_index", "material"), &Brush::set_face_material);
+	ClassDB::bind_method(D_METHOD("get_face_material", "face_index"), &Brush::get_face_material);
+
+	ClassDB::bind_method(D_METHOD("set_face_uv_transform", "face_index", "uv_transform"), &Brush::set_face_uv_transform);
+	ClassDB::bind_method(D_METHOD("get_face_uv_transform", "face_index"), &Brush::get_face_uv_transform);
+
+	ClassDB::bind_method(D_METHOD("set_face_skip", "face_index", "skip"), &Brush::set_face_skip);
+	ClassDB::bind_method(D_METHOD("get_face_skip", "face_index"), &Brush::get_face_skip);
+
+	ClassDB::bind_method(D_METHOD("get_face_center", "face_index"), &Brush::get_face_center);
+	ClassDB::bind_method(D_METHOD("get_face_uv_basis", "face_index"), &Brush::get_face_uv_basis);
+
+	ClassDB::bind_method(D_METHOD("get_face_vertex_positions", "face_index"), &Brush::get_face_vertex_positions);
+	ClassDB::bind_method(D_METHOD("get_face_vertex_normals", "face_index"), &Brush::get_face_vertex_normals);
+	ClassDB::bind_method(D_METHOD("get_face_vertex_uvs", "face_index"), &Brush::get_face_vertex_uvs);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "collision_enabled"), "set_collision_enabled", "is_collision_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "visual_enabled"), "set_visual_enabled", "is_visual_enabled");
@@ -317,7 +338,7 @@ void Brush::_update_in_shape_owner(bool p_xform_only) {
 	collision_parent->update_gizmos();
 }
 
-void Brush::_set_collision_shape(const Ref<Shape3D> &p_shape) {
+void Brush::_set_collision_shape(const Ref<ConvexPolygonShape3D> &p_shape) {
 	if (collision_shape == p_shape) {
 		return;
 	}
@@ -491,6 +512,112 @@ void Brush::set_visual_enabled(bool p_enabled) {
 	} else {
 		_set_visual_mesh(Ref<Mesh>());
 	}
+}
+
+void Brush::set_face_plane(int p_face_index, const Plane &p_plane) {
+	ERR_FAIL_INDEX_MSG(p_face_index, faces.size(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	faces[p_face_index].plane = p_plane;
+	_mark_faces_dirty();
+}
+
+Plane Brush::get_face_plane(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), Plane(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	return faces[p_face_index].plane;
+}
+
+void Brush::set_face_material(int p_face_index, const Ref<Material> &p_material) {
+	ERR_FAIL_INDEX_MSG(p_face_index, faces.size(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	faces[p_face_index].material = p_material;
+	_mark_faces_dirty();
+}
+
+Ref<Material> Brush::get_face_material(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), Ref<Material>(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	return faces[p_face_index].material;
+}
+
+void Brush::set_face_uv_transform(int p_face_index, const Transform2D &p_uv_transform) {
+	ERR_FAIL_INDEX_MSG(p_face_index, faces.size(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	faces[p_face_index].uv_transform = p_uv_transform;
+	_mark_faces_dirty();
+}
+
+Transform2D Brush::get_face_uv_transform(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), Transform2D(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	return faces[p_face_index].uv_transform;
+}
+
+void Brush::set_face_skip(int p_face_index, bool p_skip) {
+	ERR_FAIL_INDEX_MSG(p_face_index, faces.size(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	faces[p_face_index].skip = p_skip;
+	_mark_faces_dirty();
+}
+
+bool Brush::get_face_skip(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), false, "Invalid face index: " + itos(p_face_index) + ".");
+
+	return faces[p_face_index].skip;
+}
+
+Vector3 Brush::get_face_center(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), Vector3(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	return faces[p_face_index].center;
+}
+
+Basis Brush::get_face_uv_basis(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), Basis(), "Invalid face index: " + itos(p_face_index) + ".");
+
+	return faces[p_face_index].uv_basis;
+}
+
+PackedVector3Array Brush::get_face_vertex_positions(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), PackedVector3Array(), "Invalid face index: " + itos(p_face_index) + ".");
+	const LocalVector<Vertex> &vertices = faces[p_face_index].vertices;
+
+	PackedVector3Array positions;
+	positions.resize(vertices.size());
+
+	for (int i = 0; i < vertices.size(); i++) {
+		positions.set(i, vertices[i].position);
+	}
+
+	return positions;
+}
+
+PackedVector3Array Brush::get_face_vertex_normals(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), PackedVector3Array(), "Invalid face index: " + itos(p_face_index) + ".");
+	const LocalVector<Vertex> &vertices = faces[p_face_index].vertices;
+
+	PackedVector3Array normals;
+	normals.resize(vertices.size());
+
+	for (int i = 0; i < vertices.size(); i++) {
+		normals.set(i, vertices[i].normal);
+	}
+
+	return normals;
+}
+
+PackedVector2Array Brush::get_face_vertex_uvs(int p_face_index) const {
+	ERR_FAIL_INDEX_V_MSG(p_face_index, faces.size(), PackedVector2Array(), "Invalid face index: " + itos(p_face_index) + ".");
+	const LocalVector<Vertex> &vertices = faces[p_face_index].vertices;
+
+	PackedVector2Array uvs;
+	uvs.resize(vertices.size());
+
+	for (int i = 0; i < vertices.size(); i++) {
+		uvs.set(i, vertices[i].uv);
+	}
+
+	return uvs;
 }
 
 //////////////////////////////////////////////////////////////////////////
