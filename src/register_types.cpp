@@ -8,6 +8,10 @@
 
 #include "brush.h"
 
+#ifdef TOOLS_ENABLED
+#include "editor/brush_gizmo_plugin.h"
+#endif
+
 using namespace godot;
 
 void gdextension_initialize(ModuleInitializationLevel p_level) {
@@ -16,6 +20,11 @@ void gdextension_initialize(ModuleInitializationLevel p_level) {
 		ClassDB::register_class<BoxBrush>();
 		ClassDB::register_class<CylinderBrush>();
 	}
+#ifdef TOOLS_ENABLED
+	else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
+		ClassDB::register_class<BrushGizmoPlugin>();
+	}
+#endif
 }
 
 void gdextension_terminate(ModuleInitializationLevel p_level) {

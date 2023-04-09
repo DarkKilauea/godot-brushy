@@ -9,6 +9,11 @@ env = SConscript("godot-cpp/SConstruct")
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
 
+# Add editor source files.
+if env.editor_build:
+    env.Append(CPPPATH=["src/editor/"])
+    sources += Glob("src/editor/*.cpp")
+
 # Find gdextension path even if the directory or extension is renamed (e.g. project/addons/example/example.gdextension).
 (extension_path,) = glob("project/addons/*/*.gdextension")
 

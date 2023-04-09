@@ -4,9 +4,6 @@
 extends EditorPlugin
 
 
-const BrushGizmoPlugin = preload("res://addons/brushy/editor/brush_gizmo_plugin.gd");
-
-
 var undo_redo: EditorUndoRedoManager;
 var brush_gizmo_plugin: BrushGizmoPlugin;
 
