@@ -13,6 +13,7 @@ class BrushGizmoPlugin : public EditorNode3DGizmoPlugin {
 
 protected:
 	static void _bind_methods();
+	Ref<StandardMaterial3D> _get_or_create_material(const String &name, const Ref<EditorNode3DGizmo> &gizmo);
 
 public:
 	BrushGizmoPlugin();

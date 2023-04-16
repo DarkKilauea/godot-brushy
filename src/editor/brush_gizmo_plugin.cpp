@@ -11,9 +11,25 @@ void BrushGizmoPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_undo_redo_manager", "undo_redo_manager"), &BrushGizmoPlugin::set_undo_redo_manager);
 }
 
+// Workaround for doctool constructing the class to get info.
+Ref<StandardMaterial3D> BrushGizmoPlugin::_get_or_create_material(const String &name, const Ref<EditorNode3DGizmo> &gizmo) {
+	Ref<StandardMaterial3D> material = get_material(name, gizmo);
+	if (material.is_valid()) {
+		return material;
+	}
+
+	if (name == "border") {
+		create_material(name, Color::named("ORANGE"));
+		return get_material(name, gizmo);
+	} else if (name == "face_centers") {
+		create_handle_material(name);
+		return get_material(name, gizmo);
+	} else {
+		ERR_FAIL_V_MSG(material, "Unknown material: " + name);
+	}
+}
+
 BrushGizmoPlugin::BrushGizmoPlugin() {
-	create_material("border", Color::named("ORANGE"));
-	create_handle_material("face_centers");
 }
 
 BrushGizmoPlugin::~BrushGizmoPlugin() {
@@ -48,11 +64,11 @@ void BrushGizmoPlugin::_redraw(const Ref<EditorNode3DGizmo> &gizmo) {
 		PackedVector3Array vertex_positions = brush->get_face_vertex_positions(i);
 		lines.append_array(vertex_positions);
 
-		gizmo_nonconst->add_lines(lines, get_material("border", gizmo));
+		gizmo_nonconst->add_lines(lines, _get_or_create_material("border", gizmo));
 		gizmo_nonconst->add_collision_segments(lines);
 	}
 
-	gizmo_nonconst->add_handles(centers, get_material("face_centers", gizmo), PackedInt32Array());
+	gizmo_nonconst->add_handles(centers, _get_or_create_material("face_centers", gizmo), PackedInt32Array());
 }
 
 String BrushGizmoPlugin::_get_handle_name(const Ref<EditorNode3DGizmo> &gizmo, int32_t handle_id, bool secondary) const {
