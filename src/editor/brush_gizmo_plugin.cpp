@@ -51,7 +51,7 @@ void BrushGizmoPlugin::_redraw(const Ref<EditorNode3DGizmo> &gizmo) {
 	Brush *brush = Object::cast_to<Brush>(gizmo->get_node_3d());
 	ERR_FAIL_NULL(brush);
 
-	// HACK: gizmo is incorrected marked as const, need to remove the const qualifier.
+	// HACK: gizmo is incorrectly marked as const, need to remove the const qualifier.
 	EditorNode3DGizmo *gizmo_nonconst = const_cast<EditorNode3DGizmo *>(gizmo.ptr());
 
 	gizmo_nonconst->clear();

@@ -376,8 +376,10 @@ Ref<ConvexPolygonShape3D> Brush::_build_collision_shape() const {
 	// Convert to PackedVector3Array
 	PackedVector3Array points;
 	points.resize(collision_vertices.size());
+
+	uint32_t i = 0;
 	for (Vector3 vertex : collision_vertices) {
-		points.push_back(vertex);
+		points[i++] = vertex;
 	}
 
 	// Create shape
