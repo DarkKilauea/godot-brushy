@@ -40,7 +40,7 @@ void BrushGizmoPlugin::set_undo_redo_manager(EditorUndoRedoManager *p_undo_redo_
 }
 
 bool BrushGizmoPlugin::_has_gizmo(Node3D *for_node_3d) const {
-	return Object::cast_to<Brush>(for_node_3d) != nullptr;
+	return for_node_3d && for_node_3d->is_class("Brush");
 }
 
 String BrushGizmoPlugin::_get_gizmo_name() const {
