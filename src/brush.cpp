@@ -364,6 +364,15 @@ void Brush::_set_visual_mesh(const Ref<Mesh> &p_mesh) {
 	visual_mesh_instance->set_mesh(visual_mesh);
 }
 
+void Brush::_set_triangle_mesh(const Ref<TriangleMesh> &p_mesh) {
+	if (triangle_mesh == p_mesh) {
+		return;
+	}
+
+	triangle_mesh = p_mesh;
+	update_gizmos();
+}
+
 Ref<ConvexPolygonShape3D> Brush::_build_collision_shape() const {
 	// Gather unique vertices
 	HashSet<Vector3> collision_vertices;
@@ -455,6 +464,27 @@ Ref<ArrayMesh> Brush::_build_visual_mesh() const {
 	return mesh;
 }
 
+Ref<TriangleMesh> Brush::_build_triangle_mesh() const {
+	Ref<ArrayMesh> mesh;
+	Ref<SurfaceTool> surface_tool = Ref<SurfaceTool>(memnew(SurfaceTool));
+	PackedVector3Array vertex_data;
+
+	for (const Face &face : faces) {
+		vertex_data.clear();
+
+		for (Vertex vertex : face.vertices) {
+			vertex_data.append(vertex.position);
+		}
+
+		surface_tool->clear();
+		surface_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
+		surface_tool->add_triangle_fan(vertex_data);
+		mesh = surface_tool->commit(mesh);
+	}
+
+	return mesh->generate_triangle_mesh();
+}
+
 void Brush::_mark_faces_dirty() {
 	if (faces_dirty) {
 		return;
@@ -489,6 +519,9 @@ void Brush::_update_meshes() {
 
 	// Update collision shape
 	_set_collision_shape(_build_collision_shape());
+
+	// Update triangle mesh
+	_set_triangle_mesh(_build_triangle_mesh());
 
 	update_gizmos();
 	faces_dirty = false;

@@ -2,6 +2,7 @@
 
 #include <godot_cpp/classes/geometry3d.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/triangle_mesh.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
@@ -59,19 +60,13 @@ void BrushGizmoPlugin::_redraw(const Ref<EditorNode3DGizmo> &gizmo) {
 	EditorNode3DGizmo *gizmo_nonconst = const_cast<EditorNode3DGizmo *>(gizmo.ptr());
 
 	gizmo_nonconst->clear();
+
 	PackedVector3Array centers;
-
 	for (uint32_t i = 0; i < brush->get_face_count(); i++) {
-		PackedVector3Array lines;
 		centers.append(brush->get_face_center(i));
-
-		PackedVector3Array vertex_positions = brush->get_face_vertex_positions(i);
-		lines.append_array(vertex_positions);
-
-		gizmo_nonconst->add_lines(lines, _get_or_create_material("border", gizmo));
-		gizmo_nonconst->add_collision_segments(lines);
 	}
 
+	gizmo_nonconst->add_collision_triangles(brush->get_triangle_mesh());
 	gizmo_nonconst->add_handles(centers, _get_or_create_material("face_centers", gizmo), PackedInt32Array());
 }
 

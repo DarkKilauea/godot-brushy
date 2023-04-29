@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/convex_polygon_shape3d.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/triangle_mesh.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 
@@ -46,6 +47,8 @@ class Brush : public Node3D {
 	Ref<Mesh> visual_mesh = nullptr;
 	MeshInstance3D *visual_mesh_instance = nullptr;
 
+	Ref<TriangleMesh> triangle_mesh = nullptr;
+
 	Vector3 center;
 	bool faces_dirty = false;
 	LocalVector<Face> faces;
@@ -61,9 +64,11 @@ protected:
 
 	void _set_collision_shape(const Ref<ConvexPolygonShape3D> &p_shape);
 	void _set_visual_mesh(const Ref<Mesh> &p_mesh);
+	void _set_triangle_mesh(const Ref<TriangleMesh> &p_mesh);
 
 	Ref<ConvexPolygonShape3D> _build_collision_shape() const;
 	Ref<ArrayMesh> _build_visual_mesh() const;
+	Ref<TriangleMesh> _build_triangle_mesh() const;
 
 	void _mark_faces_dirty();
 	void _update_meshes();
@@ -81,6 +86,8 @@ public:
 	bool is_visual_enabled() const { return visual_enabled; }
 
 	Ref<Mesh> get_visual_mesh() const { return visual_mesh; }
+
+	Ref<TriangleMesh> get_triangle_mesh() const { return triangle_mesh; }
 
 	uint32_t get_face_count() const { return faces.size(); }
 
