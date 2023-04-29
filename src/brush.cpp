@@ -373,6 +373,11 @@ Ref<ConvexPolygonShape3D> Brush::_build_collision_shape() const {
 		}
 	}
 
+	// At least 4 vertices are required to create a convex hull
+	if (collision_vertices.size() < 4) {
+		return Ref<ConvexPolygonShape3D>();
+	}
+
 	// Convert to PackedVector3Array
 	PackedVector3Array points;
 	points.resize(collision_vertices.size());
@@ -389,21 +394,17 @@ Ref<ConvexPolygonShape3D> Brush::_build_collision_shape() const {
 }
 
 Ref<ArrayMesh> Brush::_build_visual_mesh() const {
-	Ref<SurfaceTool> surface_tool = Ref<SurfaceTool>(memnew(SurfaceTool));
-	Ref<ArrayMesh> mesh = Ref<ArrayMesh>(memnew(ArrayMesh));
-
-	PackedVector3Array vertex_data;
-	PackedVector2Array uv_data;
-	PackedColorArray color_data;
-	PackedVector2Array lightmap_uv_data;
-	PackedVector3Array normal_data;
-	TypedArray<Plane> tangent_data;
-
 	// Group faces by their material
 	HashSet<Ref<Material>> materials;
 	HashMap<Ref<Material>, LocalVector<Face>> faces_by_material;
 	for (const Face &face : faces) {
+		// Skip faces marked as skipped (no render)
 		if (face.skip) {
+			continue;
+		}
+
+		// Skip faces with less than 3 vertices
+		if (face.vertices.size() < 3) {
 			continue;
 		}
 
@@ -415,6 +416,15 @@ Ref<ArrayMesh> Brush::_build_visual_mesh() const {
 	}
 
 	// Create a surface per material
+	Ref<ArrayMesh> mesh;
+	Ref<SurfaceTool> surface_tool = Ref<SurfaceTool>(memnew(SurfaceTool));
+	PackedVector3Array vertex_data;
+	PackedVector2Array uv_data;
+	PackedColorArray color_data;
+	PackedVector2Array lightmap_uv_data;
+	PackedVector3Array normal_data;
+	TypedArray<Plane> tangent_data;
+
 	for (Ref<Material> material : materials) {
 		surface_tool->clear();
 		surface_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
@@ -438,7 +448,8 @@ Ref<ArrayMesh> Brush::_build_visual_mesh() const {
 			surface_tool->add_triangle_fan(vertex_data, uv_data, color_data, lightmap_uv_data, normal_data, tangent_data);
 		}
 
-		surface_tool->commit(mesh);
+		// Will create the mesh if missing, or add a new surface to the existing mesh.
+		mesh = surface_tool->commit(mesh);
 	}
 
 	return mesh;
