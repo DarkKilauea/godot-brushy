@@ -12,7 +12,7 @@ func _enter_tree() -> void:
 	undo_redo = get_undo_redo();
 	
 	brush_gizmo_plugin = BrushGizmoPlugin.new();
-	#brush_gizmo_plugin.set_undo_redo_manager(undo_redo);
+	brush_gizmo_plugin.set_undo_redo_manager(undo_redo);
 	add_node_3d_gizmo_plugin(brush_gizmo_plugin);
 
 

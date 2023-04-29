@@ -19,7 +19,7 @@ public:
 	BrushGizmoPlugin();
 	~BrushGizmoPlugin() override;
 
-	void set_undo_redo_manager(EditorUndoRedoManager *p_undo_redo_manager);
+	void set_undo_redo_manager(Variant p_undo_redo_manager);
 
 	bool _has_gizmo(Node3D *for_node_3d) const override;
 	String _get_gizmo_name() const override;
