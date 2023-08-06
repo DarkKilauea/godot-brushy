@@ -13,7 +13,3 @@ config_version=5
 config/name="project"
 run/main_scene="res://demo/scene.tscn"
 config/features=PackedStringArray("4.1", "Forward Plus")
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/brushy/plugin.cfg")

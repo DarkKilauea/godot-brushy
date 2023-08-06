@@ -10,6 +10,7 @@
 
 #ifdef TOOLS_ENABLED
 #include "editor/brush_gizmo_plugin.h"
+#include "editor/brushy_editor_plugin.h"
 #endif
 
 using namespace godot;
@@ -23,13 +24,18 @@ void gdextension_initialize(ModuleInitializationLevel p_level) {
 #ifdef TOOLS_ENABLED
 	else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
 		ClassDB::register_class<BrushGizmoPlugin>();
+		ClassDB::register_class<BrushyEditorPlugin>();
+		EditorPlugins::add_by_type<BrushyEditorPlugin>();
 	}
 #endif
 }
 
 void gdextension_terminate(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+#ifdef TOOLS_ENABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
+		EditorPlugins::remove_by_type<BrushyEditorPlugin>();
 	}
+#endif
 }
 
 extern "C" {

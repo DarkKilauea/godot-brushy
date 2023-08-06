@@ -36,12 +36,8 @@ BrushGizmoPlugin::BrushGizmoPlugin() {
 BrushGizmoPlugin::~BrushGizmoPlugin() {
 }
 
-void BrushGizmoPlugin::set_undo_redo_manager(Variant p_undo_redo_manager) {
-	ERR_FAIL_COND(p_undo_redo_manager.get_type() != Variant::OBJECT);
-	Object *obj = p_undo_redo_manager.operator godot::Object *();
-	ERR_FAIL_COND(!obj->is_class("EditorUndoRedoManager"));
-
-	undo_redo_manager = Object::cast_to<EditorUndoRedoManager>(obj);
+void BrushGizmoPlugin::set_undo_redo_manager(EditorUndoRedoManager *p_undo_redo_manager) {
+	undo_redo_manager = p_undo_redo_manager;
 }
 
 bool BrushGizmoPlugin::_has_gizmo(Node3D *for_node_3d) const {
